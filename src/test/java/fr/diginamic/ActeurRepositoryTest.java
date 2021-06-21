@@ -4,29 +4,44 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.List;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
-import javax.persistence.TypedQuery;
+import javax.persistence.*;
 
 import org.junit.Test;
 
 public class ActeurRepositoryTest {
 	
+	/* EntityManagerFactory emf = Persistence.createEntityManagerFactory("movie_db");
+	 EntityManager em = emf.createEntityManager();
+     EntityTransaction et = em.getTransaction();*/
+
 	private EntityManagerFactory emf = Persistence.createEntityManagerFactory("movie_db");
-	private EntityManager em = emf.createEntityManager();
+	 private EntityManager em = emf.createEntityManager();
+	EntityTransaction et = em.getTransaction();
+
+
+
+
+
 	
 	/**
 	 * Extraire tous les acteurs triés dans l'ordre alphabétique des identités
 	 */
 	@Test
 	public void testExtraireActeursTriesParIdentite() {
+		et.begin();
+
+
 		
-		TypedQuery<Acteur> query = em.createQuery("SELECT a FROM Acteur a", Acteur.class);
+		TypedQuery<Acteur> query = em.createQuery("SELECT a FROM Acteur a ORDER BY a.identite ", Acteur.class);
 		List<Acteur> acteurs = query.getResultList();
 		
 		assertEquals(1137, acteurs.size());
 		assertEquals("A.J. Danna", acteurs.get(0).getIdentite());
+
+		et.commit();
+
+		em.close();
+
 	}
 	
 	/**
@@ -34,11 +49,15 @@ public class ActeurRepositoryTest {
 	 */
 	@Test
 	public void testExtraireActeursParIdentite() {
-		TypedQuery<Acteur> query = em.createQuery("SELECT a FROM Acteur a", Acteur.class);
+		et.begin();
+		TypedQuery<Acteur> query = em.createQuery("SELECT a FROM Acteur a WHERE a.identite= 'Marion Cotillard'", Acteur.class);
 		List<Acteur> acteurs = query.getResultList();
 		
 		assertEquals(1, acteurs.size());
 		assertEquals("Marion Cotillard", acteurs.get(0).getIdentite());
+
+		et.commit();
+		em.close();
 	}
 	
 	/**
@@ -47,7 +66,7 @@ public class ActeurRepositoryTest {
 	 */
 	@Test
 	public void testExtraireActeursParAnneeNaissance() {
-		TypedQuery<Acteur> query = em.createQuery("SELECT a FROM Acteur a", Acteur.class);
+		TypedQuery<Acteur> query = em.createQuery("SELECT a FROM Acteur a WHERE  YEAR (a.anniversaire) = 1985", Acteur.class);
 		List<Acteur> acteurs = query.getResultList();
 		
 		assertEquals(10, acteurs.size());
@@ -59,10 +78,8 @@ public class ActeurRepositoryTest {
 	@Test
 	public void testExtraireActeursParRole() {
 		
-		TypedQuery<Acteur> query = em.createQuery("SELECT a FROM Acteur a", Acteur.class);
+		TypedQuery<Acteur> query = em.createQuery("SELECT a FROM Acteur a JOIN a.roles b WHERE b.nom ='Harley QUINN'", Acteur.class);
 		List<Acteur> acteurs = query.getResultList();
-		
-		assertEquals(2, acteurs.size());
 		assertEquals("Margot Robbie", acteurs.get(0).getIdentite());
 		assertEquals("Margot Robbie", acteurs.get(1).getIdentite());
 	}
@@ -72,7 +89,7 @@ public class ActeurRepositoryTest {
 	 */
 	@Test
 	public void testExtraireActeursParFilmParuAnnee() {
-		TypedQuery<Acteur> query = em.createQuery("SELECT a FROM Acteur a", Acteur.class);
+		TypedQuery<Acteur> query = em.createQuery("SELECT a FROM Acteur a JOIN a.roles b JOIN b.film  c WHERE  c.annee = 2015", Acteur.class);
 		List<Acteur> acteurs = query.getResultList();
 		assertEquals(140, acteurs.size());
 	}
@@ -83,7 +100,7 @@ public class ActeurRepositoryTest {
 	 */
 	@Test
 	public void testExtraireActeursParPays() {
-		TypedQuery<Acteur> query = em.createQuery("SELECT a FROM Acteur a", Acteur.class);
+		TypedQuery<Acteur> query = em.createQuery("SELECT DISTINCT a FROM Acteur a JOIN a.roles r JOIN r.film f JOIN f.pays p WHERE p.nom = 'FRANCE'", Acteur.class);
 		List<Acteur> acteurs = query.getResultList();
 		assertEquals(158, acteurs.size());
 	}
@@ -94,7 +111,7 @@ public class ActeurRepositoryTest {
 	 */
 	@Test
 	public void testExtraireActeursParListePaysEtAnnee() {
-		TypedQuery<Acteur> query = em.createQuery("SELECT a FROM Acteur a", Acteur.class);
+		TypedQuery<Acteur> query = em.createQuery("SELECT DISTINCT a FROM Acteur a JOIN a.roles r JOIN r.film f JOIN f.pays p WHERE p.nom = 'FRANCE' AND  f.annee = 2017", Acteur.class);
 		List<Acteur> acteurs = query.getResultList();
 		assertEquals(24, acteurs.size());
 	}
@@ -106,8 +123,14 @@ public class ActeurRepositoryTest {
 	 */
 	@Test
 	public void testExtraireParRealisateurEntreAnnee() {
-		TypedQuery<Acteur> query = em.createQuery("SELECT a FROM Acteur a", Acteur.class);
+		EntityTransaction et = em.getTransaction();
+		et.begin();
+		TypedQuery<Acteur> query = em.createQuery("SELECT DISTINCT a FROM Acteur a JOIN a.roles r JOIN r.film f JOIN f.realisateurs re WHERE re.identite = 'Ridley Scott '", Acteur.class);
 		List<Acteur> acteurs = query.getResultList();
 		assertEquals(27, acteurs.size());
+
+
 	}
+
+
 }
